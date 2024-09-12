@@ -1,4 +1,40 @@
 <script setup>
+import BackBtn from "@/components/BackBtn.vue";
+import { message } from "ant-design-vue";
+import { ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+
+const router = useRouter();
+const route = useRoute();
+
+const artist = ref(route.params.artistId);
+
+const onAdd = () => {
+  router.push("/musics/add");
+};
+const onEdit = (record) => {
+  router.push(`/musics/edit/${record.key}`);
+};
+
+const onDelete = (record) => {
+  const confirmed = window.confirm(
+    `Are you sure you want to delete the song ${record.name}?`
+  );
+
+  if (confirmed) {
+    // Run your delete logic here
+    console.log(`Music ${record.name} deleted`);
+    message.success("Song deleted!");
+  } else {
+    // Handle cancellation here if needed
+    console.log("Delete action was canceled");
+  }
+};
+
+const onSongView = (record) => {
+  router.push(`/musics/${record.key}`);
+};
+
 const columns = [
   {
     name: "Name",
@@ -51,13 +87,22 @@ const data = [
 </script>
 
 <template>
-  <div class="flex flex-row justify-end mb-5">
+  <div class="flex justify-end mb-5 mr-6">
+    <BackBtn />
+  </div>
+  <div class="flex flex-row justify-between mb-5">
+    <h1 class="text-xl text-left font-semibold">
+      Songs List for Artist {{ artist }}
+    </h1>
+
     <button
+      @click="onAdd"
       class="mr-5 bg-green-600 hover:bg-green-700 py-2 px-8 rounded-sm text-white font-semibold"
     >
-      Add Song
+      Add A Song
     </button>
   </div>
+
   <a-table :columns="columns" :data-source="data">
     <template #headerCell="{ column }">
       <template v-if="column.key === 'name'">
@@ -92,18 +137,21 @@ const data = [
         </span>
       </template>
       <template v-else-if="column.key === 'action'">
-        <div class="flex flex-row">
+        <div class="flex flex-row gap-3">
           <button
+            @click="onEdit(record)"
             class="bg-blue-500 hover:bg-blue-600 text-white flex-1 text-center py-1 rounded-md font-md"
           >
             Edit
           </button>
           <a-divider type="vertical" />
           <button
+            @click="onDelete(record)"
             class="bg-red-500 hover:bg-red-600 text-white flex-1 text-center py-1 rounded-md font-md"
           >
             Delete
           </button>
+          <a-divider type="vertical" />
         </div>
       </template>
     </template>

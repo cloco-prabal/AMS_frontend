@@ -1,5 +1,5 @@
 <script setup>
-import { RouterView } from "vue-router";
+import { RouterView, useRouter } from "vue-router";
 import { ref } from "vue";
 const onCollapse = (collapsed, type) => {
   console.log(collapsed, type);
@@ -7,7 +7,13 @@ const onCollapse = (collapsed, type) => {
 const onBreakpoint = (broken) => {
   console.log(broken);
 };
-const selectedKeys = ref(["4"]);
+const selectedKeys = ref(["1"]);
+
+const router = useRouter();
+
+const onClick = () => {
+  router.push("/login");
+};
 </script>
 
 <template>
@@ -21,7 +27,7 @@ const selectedKeys = ref(["4"]);
       <div
         class="bg-gray-500 w-[100%] h-[63px] mb-5 text-white flex justify-center items-center"
       >
-        <p class="text-xl font-bold mt-4">Artist Management</p>
+        <p class="text-xl font-bold">Artist Management</p>
       </div>
       <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline">
         <a-menu-item key="1">
@@ -31,13 +37,14 @@ const selectedKeys = ref(["4"]);
           <RouterLink to="/users" class="nav-text"> Users</RouterLink>
         </a-menu-item>
       </a-menu>
-      <RouterLink to="/login" class="pt-1 font-semibold text-lg">
-        <div
-          class="my-10 text-center bg-white hover:bg-gray-200 h-10 w-[95%] mx-auto py-1"
-        >
-          Logout
-        </div>
-      </RouterLink>
+
+      <button
+        @click="onClick"
+        class="text-center bg-white hover:bg-gray-200 h-10 w-[95%] mx-auto rounded-lg font-semibold text-md mt-10 flex flex-row gap-5 justify-center items-center"
+      >
+        <p>Logout</p>
+        <i class="pi pi-sign-out"></i>
+      </button>
     </a-layout-sider>
     <a-layout>
       <a-layout-header

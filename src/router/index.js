@@ -54,7 +54,7 @@ const router = createRouter({
           component: UpdateUserView,
         },
         {
-          path: "/musics",
+          path: "/musics/:artistId",
           name: "musics-list",
           component: ListMusicView,
         },

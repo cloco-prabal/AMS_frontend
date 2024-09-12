@@ -1,4 +1,32 @@
 <script setup>
+import { message } from "ant-design-vue";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
+const onAdd = () => {
+  router.push("/users/add");
+};
+
+const onEdit = (record) => {
+  router.push(`/users/edit/${record.key}`);
+};
+
+const onDelete = (record) => {
+  const confirmed = window.confirm(
+    `Are you sure you want to delete user ${record.name}?`
+  );
+
+  if (confirmed) {
+    // Run your delete logic here
+    console.log(`User ${record.name} deleted`);
+    message.success("User deleted!");
+  } else {
+    // Handle cancellation here if needed
+    console.log("Delete action was canceled");
+  }
+};
+
 const columns = [
   {
     name: "Name",
@@ -51,8 +79,10 @@ const data = [
 </script>
 
 <template>
-  <div class="flex flex-row justify-end mb-5">
+  <div class="flex flex-row justify-between mb-5">
+    <h1 class="text-xl text-left font-semibold">Users List</h1>
     <button
+      @click="onAdd"
       class="mr-5 bg-green-600 hover:bg-green-700 py-2 px-8 rounded-sm text-white font-semibold"
     >
       Add User
@@ -94,12 +124,14 @@ const data = [
       <template v-else-if="column.key === 'action'">
         <div class="flex flex-row">
           <button
+            @click="onEdit(record)"
             class="bg-blue-500 hover:bg-blue-600 text-white flex-1 text-center py-1 rounded-md font-md"
           >
             Edit
           </button>
           <a-divider type="vertical" />
           <button
+            @click="onDelete(record)"
             class="bg-red-500 hover:bg-red-600 text-white flex-1 text-center py-1 rounded-md font-md"
           >
             Delete

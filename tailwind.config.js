@@ -6,6 +6,9 @@ export default {
       screens: {
         xsm: "10px",
       },
+      backgroundImage: {
+        "login-bg-img": "url('/src/assets/login.jpg')",
+      },
     },
   },
   plugins: [],

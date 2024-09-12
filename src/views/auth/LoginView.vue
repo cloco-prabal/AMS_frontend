@@ -1,4 +1,5 @@
 <script setup>
+import { message } from "ant-design-vue";
 import { reactive } from "vue";
 import { useRouter } from "vue-router";
 
@@ -9,6 +10,7 @@ const formState = reactive({
 });
 const onFinish = (values) => {
   console.log("Success:", values);
+  message.success("Login Successful!");
   router.push("/");
 };
 const onFinishFailed = (errorInfo) => {
@@ -17,7 +19,9 @@ const onFinishFailed = (errorInfo) => {
 </script>
 
 <template>
-  <div class="w-screen min-h-screen flex justify-center items-center">
+  <div
+    class="w-screen min-h-screen flex justify-center items-center bg-login-bg-img bg-cover"
+  >
     <a-form
       :model="formState"
       name="basic"
@@ -27,7 +31,7 @@ const onFinishFailed = (errorInfo) => {
       @finishFailed="onFinishFailed"
       layout="vertical"
     >
-      <h1 class="text-3xl my-[60px] text-left">ARM Login</h1>
+      <h1 class="text-3xl my-[60px] text-left text-white">ARM Login</h1>
       <a-form-item
         label="Email"
         name="email"
@@ -49,13 +53,16 @@ const onFinishFailed = (errorInfo) => {
           >Remember me</a-checkbox
         >
       </a-form-item> -->
-      <div class="mb-[20px] flex justify-end">
-        <RouterLink to="/register"> Don't have an account? Signup </RouterLink>
+      <div class="mb-[20px] flex justify-end text-white font-bold">
+        Don't have an account?
+        <span class="ml-2 underline text-green-400 hover:text-green-500">
+          <RouterLink to="/register">Signup</RouterLink></span
+        >
       </div>
 
       <a-form-item>
         <a-button type="primary" class="w-full h-[30px]" html-type="submit"
-          >Submit</a-button
+          >Login</a-button
         >
       </a-form-item>
     </a-form>

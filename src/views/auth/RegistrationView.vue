@@ -1,7 +1,12 @@
 <script setup>
 import { reactive, ref, toRaw } from "vue";
 import BackBtn from "@/components/BackBtn.vue";
+import { useRouter } from "vue-router";
+import { message } from "ant-design-vue";
+
 const formRef = ref();
+
+const router = useRouter();
 
 const formState = reactive({
   first_name: "",
@@ -115,6 +120,8 @@ const onSubmit = () => {
     .validate()
     .then(() => {
       console.log("values", formState, toRaw(formState));
+      message.success("Registration was successful!");
+      router.push("/login");
     })
     .catch((error) => {
       console.log("error", error);
@@ -126,7 +133,9 @@ const resetForm = () => {
 </script>
 
 <template>
-  <div class="w-screen min-h-screen flex justify-center items-center">
+  <div
+    class="w-screen min-h-screen flex justify-center items-center bg-login-bg-img bg-cover"
+  >
     <a-form
       ref="formRef"
       :model="formState"
@@ -135,7 +144,7 @@ const resetForm = () => {
       layout="vertical"
     >
       <div class="flex flex-row justify-between my-[60px]">
-        <h1 class="text-3xl text-left">ARM Registration</h1>
+        <h1 class="text-3xl text-left text-white">ARM Registration</h1>
         <BackBtn />
       </div>
 
