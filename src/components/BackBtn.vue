@@ -7,9 +7,9 @@ const onBack = () => {
 <template>
   <button
     @click="onBack"
-    class="flex flex-row gap-4 bg-white px-6 rounded-lg max-w-[90px] justify-center items-center text-black h-7 border-[2px] border-black hover:border-green-500 hover:text-green-500"
+    class="flex flex-row gap-2 bg-white px-6 rounded-sm max-w-[90px] justify-center items-center h-10 border-[2px] border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
   >
-    <i class="pi pi-arrow-left font-extrabold"></i>
-    <p>Back</p>
+    <i class="pi pi-arrow-left"></i>
+    <p class="font-semibold">Back</p>
   </button>
 </template>

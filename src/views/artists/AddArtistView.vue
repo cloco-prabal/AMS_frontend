@@ -1,49 +1,43 @@
 <script setup>
 import { reactive, ref, toRaw } from "vue";
 import BackBtn from "@/components/BackBtn.vue";
-import { useRouter } from "vue-router";
 import { message } from "ant-design-vue";
+import { useMutation, useQueryClient } from "@tanstack/vue-query";
+import moment from "moment";
+import { addArtist } from "@/api/Artists";
+import { useRouter } from "vue-router";
 
 const formRef = ref();
+const queryClient = useQueryClient();
 
 const router = useRouter();
 
+const { mutateAsync } = useMutation({
+  mutationFn: (data) => addArtist(data),
+  onSuccess: () => {
+    queryClient.invalidateQueries(["artists"]);
+    router.push("/");
+    message.success("New artist has been added");
+  },
+  onError: () => {
+    message.error("Failed to add artist");
+  },
+});
+
 const formState = reactive({
-  first_name: "",
-  last_name: "",
-  email: "",
-  password: "",
-  confirmPassword: "",
-  phone: "",
+  name: "",
   dob: undefined,
   gender: undefined,
   address: "",
+  first_release_year: "",
+  no_of_albums_released: "",
 });
 
-const validatePass = async (_rule, value) => {
-  if (value === "") {
-    return Promise.reject("Please input the password");
-  } else {
-    if (formState.comfirmPassword !== "") {
-      formRef.value.validateFields("checkPass");
-    }
-    return Promise.resolve();
-  }
-};
-const validatePass2 = async (_rule, value) => {
-  if (value === "") {
-    return Promise.reject("Please input the password again");
-  } else if (value !== formState.password) {
-    return Promise.reject("Two inputs don't match!");
-  } else {
-    return Promise.resolve();
-  }
-};
 const rules = {
-  first_name: [
+  name: [
     {
       required: true,
-      message: "Please input first name",
+      message: "Please input name",
       trigger: "change",
     },
     {
@@ -52,25 +46,7 @@ const rules = {
       trigger: "blur",
     },
   ],
-  last_name: [
-    {
-      required: true,
-      message: "Please input last name",
-      trigger: "change",
-    },
-    {
-      min: 3,
-      message: "Length should be greater than 2 characters",
-      trigger: "blur",
-    },
-  ],
-  phone: [
-    {
-      required: true,
-      message: "Please input phone",
-      trigger: "change",
-    },
-  ],
+
   address: [
     {
       required: true,
@@ -78,26 +54,7 @@ const rules = {
       trigger: "change",
     },
   ],
-  password: [
-    {
-      required: true,
-      validator: validatePass,
-      trigger: "change",
-    },
-  ],
-  confirmPassword: [
-    {
-      validator: validatePass2,
-      trigger: "change",
-    },
-  ],
-  email: [
-    {
-      required: true,
-      message: "Please input email",
-      trigger: "change",
-    },
-  ],
+
   dob: [
     {
       required: true,
@@ -118,10 +75,17 @@ const rules = {
 const onSubmit = () => {
   formRef.value
     .validate()
-    .then(() => {
-      console.log("values", formState, toRaw(formState));
-      message.success("New Artist Added!");
-      window.history.back();
+    .then(async () => {
+      const formData = toRaw(formState);
+
+      const finalFormData = {
+        ...formData,
+        dob: moment(formData.dob).format("YYYY-MM-DD"),
+      };
+
+      await mutateAsync(finalFormData);
+      // message.success("New Artist Added!");
+      // window.history.back();
     })
     .catch((error) => {
       console.log("error", error);
@@ -146,26 +110,14 @@ const resetForm = () => {
         <BackBtn />
       </div>
 
-      <a-form-item
-        ref="first_name"
-        label="First name"
-        required
-        name="first_name"
-      >
-        <a-input v-model:value="formState.first_name" />
+      <a-form-item ref="name" label="Name" required name="name">
+        <a-input v-model:value="formState.name" />
       </a-form-item>
-      <a-form-item
-        class="flex-1"
-        ref="last_name"
-        label="Last name"
-        required
-        name="last_name"
-      >
-        <a-input v-model:value="formState.last_name" />
-      </a-form-item>
+
       <div class="flex flex-row gap-4">
         <a-form-item class="flex-1" label="Gender" name="gender">
           <a-select
+            class="w-full"
             v-model:value="formState.gender"
             placeholder="please select your gender"
           >
@@ -176,6 +128,7 @@ const resetForm = () => {
         </a-form-item>
         <a-form-item class="flex-1" label="DOB" required name="dob">
           <a-date-picker
+            class="w-full"
             v-model:value="formState.dob"
             type="date"
             placeholder="Pick your DOB"
@@ -187,24 +140,30 @@ const resetForm = () => {
         <a-input v-model:value="formState.address" />
       </a-form-item>
 
-      <div class="flex flex-row gap-4">
+      <div class="flex flex-row gap-5">
         <a-form-item
-          class="flex-1"
-          ref="email"
-          label="Email"
+          ref="first_release_year"
+          label="First Release Year"
           required
-          name="email"
+          name="first_release_year"
+          class="flex-1"
         >
-          <a-input v-model:value="formState.email" />
+          <a-input-number
+            class="w-full"
+            v-model:value="formState.first_release_year"
+          />
         </a-form-item>
         <a-form-item
-          class="flex-1"
-          ref="phone"
-          label="Phone"
+          ref="no_of_albums_released"
+          label="Total Albums"
           required
-          name="phone"
+          name="no_of_albums_released"
+          class="flex-1"
         >
-          <a-input v-model:value="formState.phone" />
+          <a-input-number
+            class="w-full"
+            v-model:value="formState.no_of_albums_released"
+          />
         </a-form-item>
       </div>
 

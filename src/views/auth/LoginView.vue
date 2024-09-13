@@ -10,6 +10,7 @@ const formState = reactive({
 });
 const onFinish = (values) => {
   console.log("Success:", values);
+  localStorage.setItem("token", "fsdkfjskdlfklsdf");
   message.success("Login Successful!");
   router.push("/");
 };
@@ -19,9 +20,7 @@ const onFinishFailed = (errorInfo) => {
 </script>
 
 <template>
-  <div
-    class="w-screen min-h-screen flex justify-center items-center bg-login-bg-img bg-cover"
-  >
+  <div class="w-screen min-h-screen flex justify-center items-center bg-cover">
     <a-form
       :model="formState"
       name="basic"
@@ -31,7 +30,7 @@ const onFinishFailed = (errorInfo) => {
       @finishFailed="onFinishFailed"
       layout="vertical"
     >
-      <h1 class="text-3xl my-[60px] text-left text-white">ARM Login</h1>
+      <h1 class="text-3xl my-[60px] text-left text-black">ARM Login</h1>
       <a-form-item
         label="Email"
         name="email"
@@ -53,7 +52,7 @@ const onFinishFailed = (errorInfo) => {
           >Remember me</a-checkbox
         >
       </a-form-item> -->
-      <div class="mb-[20px] flex justify-end text-white font-bold">
+      <div class="mb-[20px] flex justify-end text-black font-semibold">
         Don't have an account?
         <span class="ml-2 underline text-green-400 hover:text-green-500">
           <RouterLink to="/register">Signup</RouterLink></span

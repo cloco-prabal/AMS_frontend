@@ -134,7 +134,7 @@ const resetForm = () => {
 
 <template>
   <div
-    class="w-screen min-h-screen flex justify-center items-center bg-login-bg-img bg-cover"
+    class="w-screen min-h-screen flex justify-center items-center -img bg-cover"
   >
     <a-form
       ref="formRef"
@@ -144,7 +144,7 @@ const resetForm = () => {
       layout="vertical"
     >
       <div class="flex flex-row justify-between my-[60px]">
-        <h1 class="text-3xl text-left text-white">ARM Registration</h1>
+        <h1 class="text-3xl text-left text-black">ARM Registration</h1>
         <BackBtn />
       </div>
 

@@ -12,6 +12,7 @@ const selectedKeys = ref(["1"]);
 const router = useRouter();
 
 const onClick = () => {
+  localStorage.removeItem("token");
   router.push("/login");
 };
 </script>
@@ -66,7 +67,6 @@ const onClick = () => {
     </a-layout>
   </a-layout>
 </template>
-
 <style scoped>
 #components-layout-demo-responsive .logo {
   height: 32px;

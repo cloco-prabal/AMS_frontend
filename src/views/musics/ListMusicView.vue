@@ -1,5 +1,7 @@
 <script setup>
+import { deleteMusic, getMusics } from "@/api/Musics";
 import BackBtn from "@/components/BackBtn.vue";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { message } from "ant-design-vue";
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -7,7 +9,25 @@ import { useRoute, useRouter } from "vue-router";
 const router = useRouter();
 const route = useRoute();
 
-const artist = ref(route.params.artistId);
+const artist = ref(route.query?.name);
+
+const queryClient = useQueryClient();
+
+const { data } = useQuery({
+  queryFn: getMusics,
+  queryKey: ["musics"],
+});
+
+const { mutateAsync } = useMutation({
+  mutationFn: (id) => deleteMusic(id),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["musics"] });
+    message.success("Music deleted");
+  },
+  onError: (err) => {
+    message.error(err.message ? err.message : "Error deleting artist");
+  },
+});
 
 const onAdd = () => {
   router.push("/musics/add");
@@ -16,127 +36,66 @@ const onEdit = (record) => {
   router.push(`/musics/edit/${record.key}`);
 };
 
-const onDelete = (record) => {
+const onDelete = async (record) => {
   const confirmed = window.confirm(
     `Are you sure you want to delete the song ${record.name}?`
   );
 
   if (confirmed) {
     // Run your delete logic here
-    console.log(`Music ${record.name} deleted`);
-    message.success("Song deleted!");
+    mutateAsync(record.id);
   } else {
     // Handle cancellation here if needed
     console.log("Delete action was canceled");
   }
 };
 
-const onSongView = (record) => {
-  router.push(`/musics/${record.key}`);
-};
-
 const columns = [
   {
-    name: "Name",
-    dataIndex: "name",
-    key: "name",
+    title: "Title",
+    dataIndex: "title",
+    key: "title",
   },
   {
-    title: "Age",
-    dataIndex: "age",
-    key: "age",
+    title: "Album",
+    dataIndex: "album_name",
+    key: "album_name",
   },
   {
-    title: "Address",
-    dataIndex: "address",
-    key: "address",
-  },
-  {
-    title: "Tags",
-    key: "tags",
-    dataIndex: "tags",
+    title: "Genre",
+    dataIndex: "genre",
+    key: "genre",
   },
   {
     title: "Action",
     key: "action",
   },
 ];
-const data = [
-  {
-    key: "1",
-    name: "John Brown",
-    age: 32,
-    address: "New York No. 1 Lake Park",
-    tags: ["nice", "developer"],
-  },
-  {
-    key: "2",
-    name: "Jim Green",
-    age: 42,
-    address: "London No. 1 Lake Park",
-    tags: ["loser"],
-  },
-  {
-    key: "3",
-    name: "Joe Black",
-    age: 32,
-    address: "Sidney No. 1 Lake Park",
-    tags: ["cool", "teacher"],
-  },
-];
 </script>
 
 <template>
-  <div class="flex justify-end mb-5 mr-6">
-    <BackBtn />
-  </div>
   <div class="flex flex-row justify-between mb-5">
-    <h1 class="text-xl text-left font-semibold">
-      Songs List for Artist {{ artist }}
+    <h1 class="text-xl text-left font-semibold underline">
+      <span class="text-green-500">{{ artist }}'s</span> Songs
     </h1>
-
-    <button
-      @click="onAdd"
-      class="mr-5 bg-green-600 hover:bg-green-700 py-2 px-8 rounded-sm text-white font-semibold"
-    >
-      Add A Song
-    </button>
+    <div class="flex justify-end mb-5 mr-6">
+      <button
+        @click="onAdd"
+        class="mr-5 bg-green-600 hover:bg-green-700 py-2 px-8 rounded-sm text-white font-semibold"
+      >
+        Add A Song
+      </button>
+      <div class="self-end">
+        <BackBtn />
+      </div>
+    </div>
   </div>
 
   <a-table :columns="columns" :data-source="data">
-    <template #headerCell="{ column }">
-      <template v-if="column.key === 'name'">
-        <span>
-          <smile-outlined />
-          Name
-        </span>
-      </template>
-    </template>
+    <template #headerCell="{ column }"> </template>
 
     <template #bodyCell="{ column, record }">
-      <template v-if="column.key === 'name'">
-        <a>
-          {{ record.name }}
-        </a>
-      </template>
-      <template v-else-if="column.key === 'tags'">
-        <span>
-          <a-tag
-            v-for="tag in record.tags"
-            :key="tag"
-            :color="
-              tag === 'loser'
-                ? 'volcano'
-                : tag.length > 5
-                ? 'geekblue'
-                : 'green'
-            "
-          >
-            {{ tag.toUpperCase() }}
-          </a-tag>
-        </span>
-      </template>
-      <template v-else-if="column.key === 'action'">
+      <template class="capitalize" v-if="column.key === 'action'">
         <div class="flex flex-row gap-3">
           <button
             @click="onEdit(record)"
@@ -153,6 +112,11 @@ const data = [
           </button>
           <a-divider type="vertical" />
         </div>
+      </template>
+      <template v-else>
+        <p class="capitalize">
+          {{ record[column.key] }}
+        </p>
       </template>
     </template>
   </a-table>

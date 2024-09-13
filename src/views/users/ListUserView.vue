@@ -1,26 +1,48 @@
 <script setup>
+import { deleteUser, getUsers } from "@/api/Users";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { message } from "ant-design-vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
+const queryClient = useQueryClient();
+
+const { mutateAsync } = useMutation({
+  mutationFn: (id) => deleteUser(id),
+  onSuccess: () => {
+    queryClient.invalidateQueries(["artists"]);
+    message.success("User deleted successfully");
+  },
+  onError: () => {
+    message.error("Error deleting user");
+  },
+});
+
+const { isPending, isError, data, error } = useQuery({
+  queryKey: ["artists"],
+  queryFn: () => getUsers(),
+});
 
 const onAdd = () => {
   router.push("/users/add");
 };
 
-const onEdit = (record) => {
+const onEdit = async (record) => {
   router.push(`/users/edit/${record.key}`);
 };
 
-const onDelete = (record) => {
+const onDelete = async (record) => {
   const confirmed = window.confirm(
     `Are you sure you want to delete user ${record.name}?`
   );
 
   if (confirmed) {
     // Run your delete logic here
-    console.log(`User ${record.name} deleted`);
-    message.success("User deleted!");
+    try {
+      await mutateAsync(record.id);
+    } catch (error) {
+      console.log(error);
+    }
   } else {
     // Handle cancellation here if needed
     console.log("Delete action was canceled");
@@ -29,14 +51,19 @@ const onDelete = (record) => {
 
 const columns = [
   {
-    name: "Name",
-    dataIndex: "name",
-    key: "name",
+    title: "First Name",
+    dataIndex: "first_name",
+    key: "first_name",
   },
   {
-    title: "Age",
-    dataIndex: "age",
-    key: "age",
+    title: "Last Name",
+    dataIndex: "last_name",
+    key: "last_name",
+  },
+  {
+    title: "Email",
+    dataIndex: "email",
+    key: "email",
   },
   {
     title: "Address",
@@ -44,36 +71,13 @@ const columns = [
     key: "address",
   },
   {
-    title: "Tags",
-    key: "tags",
-    dataIndex: "tags",
+    title: "Gender",
+    key: "gender",
+    dataIndex: "gender",
   },
   {
     title: "Action",
     key: "action",
-  },
-];
-const data = [
-  {
-    key: "1",
-    name: "John Brown",
-    age: 32,
-    address: "New York No. 1 Lake Park",
-    tags: ["nice", "developer"],
-  },
-  {
-    key: "2",
-    name: "Jim Green",
-    age: 42,
-    address: "London No. 1 Lake Park",
-    tags: ["loser"],
-  },
-  {
-    key: "3",
-    name: "Joe Black",
-    age: 32,
-    address: "Sidney No. 1 Lake Park",
-    tags: ["cool", "teacher"],
   },
 ];
 </script>
@@ -89,40 +93,19 @@ const data = [
     </button>
   </div>
   <a-table :columns="columns" :data-source="data">
-    <template #headerCell="{ column }">
-      <template v-if="column.key === 'name'">
-        <span>
-          <smile-outlined />
-          Name
-        </span>
-      </template>
-    </template>
+    <template #headerCell="{ column }"> </template>
 
     <template #bodyCell="{ column, record }">
-      <template v-if="column.key === 'name'">
-        <a>
-          {{ record.name }}
-        </a>
+      <template v-if="column.key === 'gender'">
+        <p v-if="record.gender === 'm'">Male</p>
+        <p v-else-if="record.gender === 'f'">Female</p>
+        <p v-else>Others</p>
       </template>
-      <template v-else-if="column.key === 'tags'">
-        <span>
-          <a-tag
-            v-for="tag in record.tags"
-            :key="tag"
-            :color="
-              tag === 'loser'
-                ? 'volcano'
-                : tag.length > 5
-                ? 'geekblue'
-                : 'green'
-            "
-          >
-            {{ tag.toUpperCase() }}
-          </a-tag>
-        </span>
+      <template v-else-if="column.key === 'dob'">
+        <p>{{ record.dob.split("T")[0] }}</p>
       </template>
       <template v-else-if="column.key === 'action'">
-        <div class="flex flex-row">
+        <div class="flex flex-row gap-3 min-w-[200px]">
           <button
             @click="onEdit(record)"
             class="bg-blue-500 hover:bg-blue-600 text-white flex-1 text-center py-1 rounded-md font-md"

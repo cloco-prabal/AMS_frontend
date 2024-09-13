@@ -3,10 +3,28 @@ import { reactive, ref, toRaw } from "vue";
 import BackBtn from "@/components/BackBtn.vue";
 import { useRouter } from "vue-router";
 import { message } from "ant-design-vue";
+import { useMutation, useQueryClient } from "@tanstack/vue-query";
+import moment from "moment";
+import { addUser } from "@/api/Users";
 
 const formRef = ref();
 
 const router = useRouter();
+
+const queryClient = useQueryClient();
+
+const { mutateAsync } = useMutation({
+  mutationFn: (data) => addUser(data),
+  onSuccess: () => {
+    queryClient.invalidateQueries(["users"]);
+    router.push("/users");
+    message.success("User created successfully!");
+  },
+  onError: (err) => {
+    console.log(err);
+    message.error("Failed to add user!");
+  },
+});
 
 const formState = reactive({
   first_name: "",
@@ -24,7 +42,7 @@ const validatePass = async (_rule, value) => {
   if (value === "") {
     return Promise.reject("Please input the password");
   } else {
-    if (formState.comfirmPassword !== "") {
+    if (formState.confirmPassword !== "") {
       formRef.value.validateFields("checkPass");
     }
     return Promise.resolve();
@@ -118,9 +136,14 @@ const rules = {
 const onSubmit = () => {
   formRef.value
     .validate()
-    .then(() => {
-      console.log("values", formState, toRaw(formState));
-      message.success("User created successfully!");
+    .then(async () => {
+      const formData = toRaw(formState);
+      delete formData.confirmPassword;
+      const finalFormData = {
+        ...formData,
+        dob: moment(formData.dob).format("YYYY-MM-DD"),
+      };
+      await mutateAsync(finalFormData);
       window.history.back();
     })
     .catch((error) => {
@@ -145,23 +168,54 @@ const resetForm = () => {
         <h1 class="text-xl text-left font-semibold">ADD A NEW USER</h1>
         <BackBtn />
       </div>
-
-      <a-form-item
-        ref="first_name"
-        label="First name"
-        required
-        name="first_name"
-      >
-        <a-input v-model:value="formState.first_name" />
-      </a-form-item>
-      <a-form-item
-        class="flex-1"
-        ref="last_name"
-        label="Last name"
-        required
-        name="last_name"
-      >
-        <a-input v-model:value="formState.last_name" />
+      <div class="flex flex-row gap-4">
+        <a-form-item
+          class="flex-1"
+          ref="first_name"
+          label="First name"
+          required
+          name="first_name"
+        >
+          <a-input v-model:value="formState.first_name" />
+        </a-form-item>
+        <a-form-item
+          class="flex-1"
+          ref="last_name"
+          label="Last name"
+          required
+          name="last_name"
+        >
+          <a-input v-model:value="formState.last_name" />
+        </a-form-item>
+      </div>
+      <div class="flex flex-row gap-4">
+        <a-form-item
+          class="flex-1"
+          has-feedback
+          label="Password"
+          name="password"
+        >
+          <a-input
+            v-model:value="formState.password"
+            type="password"
+            autocomplete="off"
+          />
+        </a-form-item>
+        <a-form-item
+          class="flex-1"
+          has-feedback
+          label="Confirm Password"
+          name="confirmPassword"
+        >
+          <a-input
+            v-model:value="formState.confirmPassword"
+            type="password"
+            autocomplete="off"
+          />
+        </a-form-item>
+      </div>
+      <a-form-item ref="address" label="Address" required name="address">
+        <a-input v-model:value="formState.address" />
       </a-form-item>
       <div class="flex flex-row gap-4">
         <a-form-item class="flex-1" label="Gender" name="gender">
@@ -183,9 +237,6 @@ const resetForm = () => {
           />
         </a-form-item>
       </div>
-      <a-form-item ref="address" label="Address" required name="address">
-        <a-input v-model:value="formState.address" />
-      </a-form-item>
 
       <div class="flex flex-row gap-4">
         <a-form-item

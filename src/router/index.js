@@ -13,6 +13,10 @@ import AddArtistView from "@/views/artists/AddArtistView.vue";
 import UpdateArtistView from "@/views/artists/UpdateArtistView.vue";
 import NotFound from "@/views/NotFound.vue";
 
+function isAuthenticated() {
+  return !!localStorage.getItem("token");
+}
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -85,6 +89,24 @@ const router = createRouter({
       component: NotFound,
     },
   ],
+});
+
+router.beforeEach((to, from, next) => {
+  const publicPages = ["/login", "/register"];
+  const authRequired = !publicPages.includes(to.path);
+  const loggedIn = isAuthenticated();
+
+  // Redirect to login if trying to access a protected route without authentication
+  if (authRequired && !loggedIn) {
+    return next("/login");
+  }
+
+  // Redirect to home (or protected route) if already logged in and trying to access an auth page
+  if (loggedIn && publicPages.includes(to.path)) {
+    return next("/");
+  }
+
+  next();
 });
 
 export default router;

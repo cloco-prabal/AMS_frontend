@@ -1,8 +1,41 @@
 <script setup>
+import { deleteArtist, getArtists } from "@/api/Artists";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { message } from "ant-design-vue";
 import { useRouter } from "vue-router";
+import { mkConfig, generateCsv, download } from "export-to-csv";
+import { toRaw } from "vue";
 
 const router = useRouter();
+
+//Query
+
+const queryClient = useQueryClient();
+
+const { isPending, isError, data, error } = useQuery({
+  queryKey: ["artists"],
+  queryFn: getArtists,
+});
+
+const { mutateAsync } = useMutation({
+  mutationFn: (id) => deleteArtist(id),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["artists"] });
+    message.success("Artist and their songs deleted successfully.");
+  },
+  onError: (err) => {
+    message.error(err.message ? err.message : "Error deleting artist");
+  },
+});
+
+const csvExport = (filename = "Artists") => {
+  // mkConfig merges your options with the defaults
+  // and returns WithDefaults<ConfigOptions>
+
+  const csvConfig = mkConfig({ useKeysAsHeaders: true, filename: filename });
+  const csv = generateCsv(csvConfig)(toRaw(data.value));
+  download(csvConfig)(csv);
+};
 
 const onAdd = () => {
   router.push("/artists/add");
@@ -11,7 +44,7 @@ const onEdit = (record) => {
   router.push(`/artists/edit/${record.key}`);
 };
 
-const onDelete = (record) => {
+const onDelete = async (record) => {
   const confirmed = window.confirm(
     `Are you sure you want to delete artist ${record.name}?`
   );
@@ -19,7 +52,7 @@ const onDelete = (record) => {
   if (confirmed) {
     // Run your delete logic here
     console.log(`Artist ${record.name} deleted`);
-    message.success("Artist deleted!");
+    await mutateAsync(record.id);
   } else {
     // Handle cancellation here if needed
     console.log("Delete action was canceled");
@@ -27,19 +60,24 @@ const onDelete = (record) => {
 };
 
 const onSongView = (record) => {
-  router.push(`/musics/${record.key}`);
+  router.push(`/musics/${record.id}?name=${record.name}`);
 };
 
 const columns = [
   {
     name: "Name",
     dataIndex: "name",
-    key: "name",
+    key: "Name",
   },
   {
-    title: "Age",
-    dataIndex: "age",
-    key: "age",
+    title: "Date of birth",
+    dataIndex: "dob",
+    key: "dob",
+  },
+  {
+    title: "Gender",
+    dataIndex: "gender",
+    key: "gender",
   },
   {
     title: "Address",
@@ -47,36 +85,18 @@ const columns = [
     key: "address",
   },
   {
-    title: "Tags",
-    key: "tags",
-    dataIndex: "tags",
+    title: "First Release Year",
+    dataIndex: "first_release_year",
+    key: "First Released Year",
+  },
+  {
+    title: "No of Albums",
+    dataIndex: "no_of_albums_released",
+    key: "Albums Released",
   },
   {
     title: "Action",
     key: "action",
-  },
-];
-const data = [
-  {
-    key: "1",
-    name: "John Brown",
-    age: 32,
-    address: "New York No. 1 Lake Park",
-    tags: ["nice", "developer"],
-  },
-  {
-    key: "2",
-    name: "Jim Green",
-    age: 42,
-    address: "London No. 1 Lake Park",
-    tags: ["loser"],
-  },
-  {
-    key: "3",
-    name: "Joe Black",
-    age: 32,
-    address: "Sidney No. 1 Lake Park",
-    tags: ["cool", "teacher"],
   },
 ];
 </script>
@@ -84,21 +104,39 @@ const data = [
 <template>
   <div class="flex flex-row justify-between mb-5">
     <h1 class="text-xl text-left font-semibold">Artists List</h1>
-    <button
-      @click="onAdd"
-      class="mr-5 bg-green-600 hover:bg-green-700 py-2 px-8 rounded-sm text-white font-semibold"
-    >
-      Add Artist
-    </button>
+
+    <div>
+      <button
+        @click="csvExport()"
+        class="mr-5 border-green-600 hover:border-green-400 border-2 py-2 px-8 rounded-sm text-green-600 font-semibold"
+      >
+        <i class="pi pi-file-export mr-2"></i>
+        Export CSV
+      </button>
+      <button
+        @click="console.log('hello')"
+        class="mr-5 border-blue-600 hover:border-blue-400 border-2 py-2 px-8 rounded-sm text-blue-600 font-semibold"
+      >
+        <i class="pi pi-file-import mr-2"></i>
+
+        Import CSV
+      </button>
+      <button
+        @click="onAdd"
+        class="mr-5 bg-green-600 hover:bg-green-700 py-2 px-8 rounded-sm text-white font-semibold"
+      >
+        Add Artist
+      </button>
+    </div>
   </div>
 
   <a-table :columns="columns" :data-source="data">
     <template #headerCell="{ column }">
       <template v-if="column.key === 'name'">
-        <span>
-          <smile-outlined />
-          Name
-        </span>
+        <span class="uppercase"> Name </span>
+      </template>
+      <template v-else>
+        <span class="capitalize">{{ column.key }} </span>
       </template>
     </template>
 
@@ -108,25 +146,18 @@ const data = [
           {{ record.name }}
         </a>
       </template>
-      <template v-else-if="column.key === 'tags'">
-        <span>
-          <a-tag
-            v-for="tag in record.tags"
-            :key="tag"
-            :color="
-              tag === 'loser'
-                ? 'volcano'
-                : tag.length > 5
-                ? 'geekblue'
-                : 'green'
-            "
-          >
-            {{ tag.toUpperCase() }}
-          </a-tag>
-        </span>
+
+      <template v-if="column.key === 'gender'">
+        <p v-if="record.gender === 'm'">Male</p>
+        <p v-else-if="record.gender === 'f'">Female</p>
+        <p v-else>Others</p>
       </template>
+      <template v-else-if="column.key === 'dob'">
+        <p>{{ record.dob.split("T")[0] }}</p>
+      </template>
+
       <template v-else-if="column.key === 'action'">
-        <div class="flex flex-row gap-3">
+        <div class="flex flex-row gap-3 min-w-[300px]">
           <button
             @click="onEdit(record)"
             class="bg-blue-500 hover:bg-blue-600 text-white flex-1 text-center py-1 rounded-md font-md"
