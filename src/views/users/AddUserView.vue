@@ -3,14 +3,22 @@ import { reactive, ref, toRaw } from "vue";
 import BackBtn from "@/components/BackBtn.vue";
 import { useRouter } from "vue-router";
 import { message } from "ant-design-vue";
-import { useMutation, useQueryClient } from "@tanstack/vue-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import moment from "moment";
 import { addUser } from "@/api/Users";
+import { getRoles } from "@/api/Roles";
+
+// Fetch roles data
+// Fetch roles data
+const { data: rolesData } = useQuery({
+  queryKey: ["roles"],
+  queryFn: () => getRoles(),
+});
+
+console.log(rolesData);
 
 const formRef = ref();
-
 const router = useRouter();
-
 const queryClient = useQueryClient();
 
 const { mutateAsync } = useMutation({
@@ -36,6 +44,7 @@ const formState = reactive({
   dob: undefined,
   gender: undefined,
   address: "",
+  role_id: "",
 });
 
 const validatePass = async (_rule, value) => {
@@ -48,6 +57,7 @@ const validatePass = async (_rule, value) => {
     return Promise.resolve();
   }
 };
+
 const validatePass2 = async (_rule, value) => {
   if (value === "") {
     return Promise.reject("Please input the password again");
@@ -57,13 +67,10 @@ const validatePass2 = async (_rule, value) => {
     return Promise.resolve();
   }
 };
+
 const rules = {
   first_name: [
-    {
-      required: true,
-      message: "Please input first name",
-      trigger: "change",
-    },
+    { required: true, message: "Please input first name", trigger: "change" },
     {
       min: 3,
       message: "Length should be greater than 2 characters",
@@ -71,50 +78,22 @@ const rules = {
     },
   ],
   last_name: [
-    {
-      required: true,
-      message: "Please input last name",
-      trigger: "change",
-    },
+    { required: true, message: "Please input last name", trigger: "change" },
     {
       min: 3,
       message: "Length should be greater than 2 characters",
       trigger: "blur",
     },
   ],
-  phone: [
-    {
-      required: true,
-      message: "Please input phone",
-      trigger: "change",
-    },
-  ],
+  phone: [{ required: true, message: "Please input phone", trigger: "change" }],
   address: [
-    {
-      required: true,
-      message: "Please input address",
-      trigger: "change",
-    },
+    { required: true, message: "Please input address", trigger: "change" },
   ],
-  password: [
-    {
-      required: true,
-      validator: validatePass,
-      trigger: "change",
-    },
-  ],
-  confirmPassword: [
-    {
-      validator: validatePass2,
-      trigger: "change",
-    },
-  ],
-  email: [
-    {
-      required: true,
-      message: "Please input email",
-      trigger: "change",
-    },
+  password: [{ required: true, validator: validatePass, trigger: "change" }],
+  confirmPassword: [{ validator: validatePass2, trigger: "change" }],
+  email: [{ required: true, message: "Please input email", trigger: "change" }],
+  role_id: [
+    { required: true, message: "Please input role", trigger: "change" },
   ],
   dob: [
     {
@@ -126,13 +105,13 @@ const rules = {
   ],
   gender: [
     {
-      // type: "array",
       required: true,
-      message: "Please select at least one gender ",
+      message: "Please select at least one gender",
       trigger: "change",
     },
   ],
 };
+
 const onSubmit = () => {
   formRef.value
     .validate()
@@ -142,7 +121,9 @@ const onSubmit = () => {
       const finalFormData = {
         ...formData,
         dob: moment(formData.dob).format("YYYY-MM-DD"),
+        password_digest: formData.password,
       };
+      delete finalFormData.password;
       await mutateAsync(finalFormData);
       window.history.back();
     })
@@ -150,6 +131,7 @@ const onSubmit = () => {
       console.log("error", error);
     });
 };
+
 const resetForm = () => {
   formRef.value.resetFields();
 };
@@ -258,7 +240,24 @@ const resetForm = () => {
           <a-input v-model:value="formState.phone" />
         </a-form-item>
       </div>
-
+      <a-form-item class="flex-1" label="Role" name="role_id" required>
+        <a-select
+          v-model:value="formState.role_id"
+          placeholder="please select a role "
+        >
+          <a-select-option
+            v-for="role in rolesData"
+            :key="role.id"
+            :value="role.id"
+            class="capitalize"
+          >
+            {{ role.title }}
+          </a-select-option>
+          <!-- <a-select-option value="m">Male</a-select-option>
+          <a-select-option value="f">Female</a-select-option>
+          <a-select-option value="o">Others</a-select-option> -->
+        </a-select>
+      </a-form-item>
       <a-form-item>
         <a-button type="primary" @click="onSubmit" class="w-full h-[35px]"
           >ADD</a-button

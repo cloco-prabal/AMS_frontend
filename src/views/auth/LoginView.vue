@@ -1,4 +1,6 @@
 <script setup>
+import { login } from "@/api/Auth";
+import { useMutation } from "@tanstack/vue-query";
 import { message } from "ant-design-vue";
 import { reactive } from "vue";
 import { useRouter } from "vue-router";
@@ -8,11 +10,22 @@ const formState = reactive({
   email: "",
   password: "",
 });
-const onFinish = (values) => {
-  console.log("Success:", values);
-  localStorage.setItem("token", "fsdkfjskdlfklsdf");
-  message.success("Login Successful!");
-  router.push("/");
+
+const { mutateAsync } = useMutation({
+  mutationFn: (data) => login(data),
+  onSuccess: () => {
+    message.success("Login successfull!");
+    router.push("/");
+  },
+  onError: (err) => {
+    console.log(err);
+    message.error(err.message || "Failed to login!");
+  },
+});
+
+const onFinish = async (values) => {
+  const response = await mutateAsync(values);
+  localStorage.setItem("token", response.token);
 };
 const onFinishFailed = (errorInfo) => {
   console.log("Failed:", errorInfo);

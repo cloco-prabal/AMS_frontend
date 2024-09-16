@@ -3,6 +3,9 @@ import { reactive, ref, toRaw } from "vue";
 import BackBtn from "@/components/BackBtn.vue";
 import { useRouter } from "vue-router";
 import { message } from "ant-design-vue";
+import { useMutation } from "@tanstack/vue-query";
+import { addUser } from "@/api/Users";
+import moment from "moment";
 
 const formRef = ref();
 
@@ -20,11 +23,23 @@ const formState = reactive({
   address: "",
 });
 
+const { mutateAsync } = useMutation({
+  mutationFn: (data) => addUser(data),
+  onSuccess: () => {
+    message.success("Registration successfull!");
+    router.push("/login");
+  },
+  onError: (err) => {
+    console.log(err);
+    message.error("Failed to register!");
+  },
+});
+
 const validatePass = async (_rule, value) => {
   if (value === "") {
     return Promise.reject("Please input the password");
   } else {
-    if (formState.comfirmPassword !== "") {
+    if (formState.confirmPassword !== "") {
       formRef.value.validateFields("checkPass");
     }
     return Promise.resolve();
@@ -118,9 +133,15 @@ const rules = {
 const onSubmit = () => {
   formRef.value
     .validate()
-    .then(() => {
-      console.log("values", formState, toRaw(formState));
-      message.success("Registration was successful!");
+    .then(async () => {
+      const formData = toRaw(formState);
+      const dataToPost = {
+        ...formData,
+        dob: moment(formData?.dob).format("YYYY-MM-DD"),
+        password_digest: formData?.password,
+      };
+      delete dataToPost.password;
+      await mutateAsync(dataToPost);
       router.push("/login");
     })
     .catch((error) => {
