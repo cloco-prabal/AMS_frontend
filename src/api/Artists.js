@@ -40,6 +40,40 @@ export const addArtist = async (data) => {
   }
 };
 
+export const getArtistById = async (id) => {
+  try {
+    const response = await axiosInstance.get(`artists/${id}`);
+    if (response.data.errors) {
+      throw new Error(response.data.message || "Failed to fetch artist");
+    }
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      const errorMessage = error.response.data.message;
+      throw new Error(errorMessage);
+    } else {
+      throw error;
+    }
+  }
+};
+
+export const updateArtist = async (id, data) => {
+  try {
+    const response = await axiosInstance.put(`artists/${id}`, data);
+    if (response.data.errors) {
+      throw new Error(response.data.message || "Failed to update artist");
+    }
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      const errorMessage = error.response.data;
+      throw new Error(errorMessage);
+    } else {
+      throw error;
+    }
+  }
+};
+
 export const deleteArtist = async (id) => {
   try {
     const response = await axiosInstance.delete(`artists/${id}`);

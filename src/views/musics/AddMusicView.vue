@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, ref, toRaw } from "vue";
 import BackBtn from "@/components/BackBtn.vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { message } from "ant-design-vue";
 import { useMutation } from "@tanstack/vue-query";
 import { addMusic } from "@/api/Musics";
@@ -9,6 +9,7 @@ import { addMusic } from "@/api/Musics";
 const formRef = ref();
 
 const router = useRouter();
+const route = useRoute();
 
 const formState = reactive({
   title: "",
@@ -16,11 +17,13 @@ const formState = reactive({
   genre: undefined,
 });
 
+const artistId = ref(route.params?.artistId);
+
 const { mutateAsync } = useMutation({
   mutationFn: (data) => addMusic(data),
   onSuccess: () => {
     message.success("Music added");
-    router.push("musics");
+    history.back();
   },
   onError: () => {
     message.error("Error adding music");
@@ -66,7 +69,10 @@ const onSubmit = () => {
   formRef.value
     .validate()
     .then(async () => {
-      await mutateAsync(toRaw(formState));
+      const data = toRaw(formState);
+      const finalData = { ...data, artist_id: artistId.value };
+
+      await mutateAsync(finalData);
       // message.success("Song created successfully!");
       // window.history.back();
     })

@@ -1,4 +1,5 @@
 import axiosInstance from "@/utils/axiosInstance";
+import { data } from "autoprefixer";
 
 export const getUsers = async (page = 1, pageSize = 10) => {
   try {
@@ -15,6 +16,40 @@ export const getUsers = async (page = 1, pageSize = 10) => {
   } catch (error) {
     if (error.response) {
       const errorMessage = error.response.data.message;
+      throw new Error(errorMessage);
+    } else {
+      throw error;
+    }
+  }
+};
+
+export const getUserById = async (id) => {
+  try {
+    const response = await axiosInstance.get(`users/${id}`);
+    if (response.data.errors) {
+      throw new Error(response.data.message || "Failed to fetch user");
+    }
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      const errorMessage = error.response.data.message;
+      throw new Error(errorMessage);
+    } else {
+      throw error;
+    }
+  }
+};
+
+export const updateUser = async (id, data) => {
+  try {
+    const response = await axiosInstance.put(`users/${id}`, data);
+    if (response.data.errors) {
+      throw new Error(response.data.message || "Failed to update user");
+    }
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      const errorMessage = error.response.data;
       throw new Error(errorMessage);
     } else {
       throw error;

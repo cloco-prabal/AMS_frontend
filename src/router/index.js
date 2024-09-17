@@ -63,7 +63,7 @@ const router = createRouter({
           component: ListMusicView,
         },
         {
-          path: "/musics/add",
+          path: "/musics/add/:artistId",
           name: "add-music",
           component: AddMusicView,
         },

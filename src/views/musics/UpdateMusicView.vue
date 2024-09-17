@@ -1,48 +1,64 @@
 <script setup>
-import { reactive, ref, toRaw } from "vue";
+import { reactive, ref, toRaw, watch } from "vue";
 import BackBtn from "@/components/BackBtn.vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { message } from "ant-design-vue";
 import moment from "moment";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
+import { getMusicById, updateMusic } from "@/api/Musics";
 
 const formRef = ref();
 
 const router = useRouter();
+const route = useRoute();
 
-const formState = reactive({
-  first_name: "First name",
-  last_name: "Last name",
-  email: "first_last@gmail.com",
-  phone: "98989080",
-  dob: moment("1999-01-01"),
-  gender: "m",
-  address: "Chakupat, Lalitpur",
+const musicId = ref(route.params.id);
+
+const { data: music } = useQuery({
+  queryKey: ["music", musicId.value],
+  queryFn: () => getMusicById(musicId.value),
 });
 
-const validatePass = async (_rule, value) => {
-  if (value === "") {
-    return Promise.reject("Please input the password");
-  } else {
-    if (formState.comfirmPassword !== "") {
-      formRef.value.validateFields("checkPass");
+const queryClient = useQueryClient();
+
+const { mutateAsync } = useMutation({
+  mutationFn: (data) => updateMusic(musicId.value, data),
+  onSuccess: () => {
+    queryClient.invalidateQueries(["musics"]);
+    history.back();
+    message.success("Music updated successfully!");
+  },
+  onError: (err) => {
+    console.log(err.message);
+    message.error("Failed to update music!");
+  },
+});
+
+const formState = reactive({
+  title: "",
+  album_name: "",
+  genre: undefined,
+  artist_id: "",
+});
+// Watch for changes in the `music` data and update the form state accordingly
+watch(
+  () => music.value,
+  (newMusic) => {
+    if (newMusic) {
+      formState.title = newMusic.title || "";
+      formState.album_name = newMusic.album_name || "";
+      formState.genre = newMusic.genre || "";
+      formState.artist_id = newMusic.artist_id || "";
     }
-    return Promise.resolve();
-  }
-};
-const validatePass2 = async (_rule, value) => {
-  if (value === "") {
-    return Promise.reject("Please input the password again");
-  } else if (value !== formState.password) {
-    return Promise.reject("Two inputs don't match!");
-  } else {
-    return Promise.resolve();
-  }
-};
+  },
+  { immediate: true } // Ensures that it runs immediately after `music` is fetched
+);
+
 const rules = {
-  first_name: [
+  title: [
     {
       required: true,
-      message: "Please input first name",
+      message: "Please input music title",
       trigger: "change",
     },
     {
@@ -51,10 +67,10 @@ const rules = {
       trigger: "blur",
     },
   ],
-  last_name: [
+  album_name: [
     {
       required: true,
-      message: "Please input last name",
+      message: "Please input album name",
       trigger: "change",
     },
     {
@@ -63,53 +79,12 @@ const rules = {
       trigger: "blur",
     },
   ],
-  phone: [
-    {
-      required: true,
-      message: "Please input phone",
-      trigger: "change",
-    },
-  ],
-  address: [
-    {
-      required: true,
-      message: "Please input address",
-      trigger: "change",
-    },
-  ],
-  password: [
-    {
-      required: true,
-      validator: validatePass,
-      trigger: "change",
-    },
-  ],
-  confirmPassword: [
-    {
-      validator: validatePass2,
-      trigger: "change",
-    },
-  ],
-  email: [
-    {
-      required: true,
-      message: "Please input email",
-      trigger: "change",
-    },
-  ],
-  dob: [
-    {
-      required: true,
-      message: "Please pick a date",
-      trigger: "change",
-      type: "object",
-    },
-  ],
-  gender: [
+
+  genre: [
     {
       // type: "array",
       required: true,
-      message: "Please select at least one gender ",
+      message: "Please select at least one genre ",
       trigger: "change",
     },
   ],
@@ -117,17 +92,16 @@ const rules = {
 const onSubmit = () => {
   formRef.value
     .validate()
-    .then(() => {
-      console.log("values", formState, toRaw(formState));
-      message.success("Song updated successfully!");
-      window.history.back();
+    .then(async () => {
+      const data = toRaw(formState);
+
+      await mutateAsync(data);
+      // message.success("Song created successfully!");
+      // window.history.back();
     })
     .catch((error) => {
       console.log("error", error);
     });
-};
-const resetForm = () => {
-  formRef.value.resetFields();
 };
 </script>
 
@@ -141,75 +115,38 @@ const resetForm = () => {
       layout="vertical"
     >
       <div class="flex flex-row justify-between my-5">
-        <h1 class="text-xl text-left font-semibold">UPDATE SONG</h1>
+        <h1 class="text-xl text-left font-semibold">ADD A NEW SONG</h1>
         <BackBtn />
       </div>
 
-      <a-form-item
-        ref="first_name"
-        label="First name"
-        required
-        name="first_name"
-      >
-        <a-input v-model:value="formState.first_name" />
+      <a-form-item ref="title" label="Title" required name="title">
+        <a-input v-model:value="formState.title" />
       </a-form-item>
       <a-form-item
-        class="flex-1"
-        ref="last_name"
-        label="Last name"
+        ref="album_name"
+        label="Album Name"
         required
-        name="last_name"
+        name="album_name"
       >
-        <a-input v-model:value="formState.last_name" />
-      </a-form-item>
-      <div class="flex flex-row gap-4">
-        <a-form-item class="flex-1" label="Gender" name="gender">
-          <a-select
-            v-model:value="formState.gender"
-            placeholder="please select your gender"
-          >
-            <a-select-option value="m">Male</a-select-option>
-            <a-select-option value="f">Female</a-select-option>
-            <a-select-option value="o">Others</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item class="flex-1" label="DOB" required name="dob">
-          <a-date-picker
-            v-model:value="formState.dob"
-            type="date"
-            placeholder="Pick your DOB"
-            style="width: 100%"
-          />
-        </a-form-item>
-      </div>
-      <a-form-item ref="address" label="Address" required name="address">
-        <a-input v-model:value="formState.address" />
+        <a-input v-model:value="formState.album_name" />
       </a-form-item>
 
-      <div class="flex flex-row gap-4">
-        <a-form-item
-          class="flex-1"
-          ref="email"
-          label="Email"
-          required
-          name="email"
+      <a-form-item class="flex-1" label="Genre" name="genre">
+        <a-select
+          v-model:value="formState.genre"
+          placeholder="Please select genre"
         >
-          <a-input v-model:value="formState.email" />
-        </a-form-item>
-        <a-form-item
-          class="flex-1"
-          ref="phone"
-          label="Phone"
-          required
-          name="phone"
-        >
-          <a-input v-model:value="formState.phone" />
-        </a-form-item>
-      </div>
+          <a-select-option value="rnb">R&B</a-select-option>
+          <a-select-option value="country">Country</a-select-option>
+          <a-select-option value="classic">Classic</a-select-option>
+          <a-select-option value="rock">Rock</a-select-option>
+          <a-select-option value="jazz">Jazz</a-select-option>
+        </a-select>
+      </a-form-item>
 
       <a-form-item>
-        <a-button type="primary" @click="onSubmit" class="w-full h-[30px]"
-          >UPDATE</a-button
+        <a-button type="primary" @click="onSubmit" class="w-full h-[35px]"
+          >ADD</a-button
         >
       </a-form-item>
     </a-form>

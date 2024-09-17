@@ -15,8 +15,6 @@ const { data: rolesData } = useQuery({
   queryFn: () => getRoles(),
 });
 
-console.log(rolesData);
-
 const formRef = ref();
 const router = useRouter();
 const queryClient = useQueryClient();
@@ -29,7 +27,6 @@ const { mutateAsync } = useMutation({
     message.success("User created successfully!");
   },
   onError: (err) => {
-    console.log(err);
     message.error("Failed to add user!");
   },
 });

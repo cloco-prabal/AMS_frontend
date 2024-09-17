@@ -2,6 +2,7 @@
 import { deleteUser, getUsers } from "@/api/Users";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { message } from "ant-design-vue";
+import { computed } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -18,17 +19,18 @@ const { mutateAsync } = useMutation({
   },
 });
 
-const { isPending, isError, data, error } = useQuery({
-  queryKey: ["artists"],
+const { data: response } = useQuery({
+  queryKey: ["users"],
   queryFn: () => getUsers(),
 });
-
+const users = computed(() => response?.value?.data || []);
+const pagination = computed(() => response?.value?.pagination || {});
 const onAdd = () => {
   router.push("/users/add");
 };
 
 const onEdit = async (record) => {
-  router.push(`/users/edit/${record.key}`);
+  router.push(`/users/edit/${record.id}`);
 };
 
 const onDelete = async (record) => {
@@ -92,7 +94,7 @@ const columns = [
       Add User
     </button>
   </div>
-  <a-table :columns="columns" :data-source="data">
+  <a-table :columns="columns" :data-source="users">
     <template #headerCell="{ column }"> </template>
 
     <template #bodyCell="{ column, record }">

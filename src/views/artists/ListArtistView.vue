@@ -1,10 +1,12 @@
 <script setup>
-import { deleteArtist, getArtists } from "@/api/Artists";
+import { addArtist, deleteArtist, getArtists } from "@/api/Artists";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
-import { message } from "ant-design-vue";
+import { message, Upload } from "ant-design-vue";
 import { useRouter } from "vue-router";
 import { mkConfig, generateCsv, download } from "export-to-csv";
-import { toRaw } from "vue";
+import { computed, toRaw } from "vue";
+import Papa from "papaparse";
+import moment from "moment";
 
 const router = useRouter();
 
@@ -12,10 +14,13 @@ const router = useRouter();
 
 const queryClient = useQueryClient();
 
-const { isPending, isError, data, error } = useQuery({
+const { data: response } = useQuery({
   queryKey: ["artists"],
-  queryFn: getArtists,
+  queryFn: () => getArtists(),
 });
+
+const artists = computed(() => response?.value?.data || []);
+const pagination = computed(() => response?.value?.pagination || {});
 
 const { mutateAsync } = useMutation({
   mutationFn: (id) => deleteArtist(id),
@@ -28,6 +33,14 @@ const { mutateAsync } = useMutation({
   },
 });
 
+const { mutateAsync: importMutate } = useMutation({
+  mutationFn: (artists) => addArtist(artists),
+  onSuccess: () => {},
+  onError: (err) => {
+    message.error(err.message ? err.message : "Error importing artists");
+  },
+});
+
 const csvExport = (filename = "Artists") => {
   // mkConfig merges your options with the defaults
   // and returns WithDefaults<ConfigOptions>
@@ -37,11 +50,44 @@ const csvExport = (filename = "Artists") => {
   download(csvConfig)(csv);
 };
 
+const csvImport = (info) => {
+  if (info.file.status === "done") {
+    Papa.parse(info.file.originFileObj, {
+      header: true,
+      complete: async (result) => {
+        const artists = result.data.map((artist) => {
+          const { id, created_at, updated_at, ...rest } = artist;
+          return {
+            ...rest,
+            dob: rest.dob ? moment(rest.dob).format("YYYY-MM-DD") : null,
+          };
+        });
+
+        for (const artist of artists) {
+          try {
+            await importMutate(artist);
+          } catch (error) {
+            message.error(
+              `Error importing artist: ${artist.name}. ${error.message}`
+            );
+          }
+        }
+
+        message.success("CSV file processed and artists imported.");
+        queryClient.invalidateQueries(["artists"]);
+      },
+      error: () => {
+        message.error("Error parsing CSV file.");
+      },
+    });
+  }
+};
+
 const onAdd = () => {
   router.push("/artists/add");
 };
 const onEdit = (record) => {
-  router.push(`/artists/edit/${record.key}`);
+  router.push(`/artists/edit/${record.id}`);
 };
 
 const onDelete = async (record) => {
@@ -61,6 +107,10 @@ const onDelete = async (record) => {
 
 const onSongView = (record) => {
   router.push(`/musics/${record.id}?name=${record.name}`);
+};
+
+const customRequest = ({ file, onSuccess }) => {
+  setTimeout(() => onSuccess("ok"), 0); // To simulate successful upload
 };
 
 const columns = [
@@ -105,22 +155,29 @@ const columns = [
   <div class="flex flex-row justify-between mb-5">
     <h1 class="text-xl text-left font-semibold">Artists List</h1>
 
-    <div>
+    <div class="flex">
       <button
         @click="csvExport()"
-        class="mr-5 border-green-600 hover:border-green-400 border-2 py-2 px-8 rounded-sm text-green-600 font-semibold"
+        class="mr-5 border-green-400 hover:border-green-400 border-2 py-2 px-8 rounded-sm hover:text-green-600 font-semibold"
       >
         <i class="pi pi-file-export mr-2"></i>
         Export CSV
       </button>
-      <button
-        @click="console.log('hello')"
-        class="mr-5 border-blue-600 hover:border-blue-400 border-2 py-2 px-8 rounded-sm text-blue-600 font-semibold"
+      <a-upload
+        accept=".csv"
+        @change="csvImport"
+        :showUploadList="false"
+        :customRequest="customRequest"
       >
-        <i class="pi pi-file-import mr-2"></i>
+        <button
+          class="mr-5 border-blue-400 hover:border-blue-400 border-2 py-2 px-8 rounded-sm hover:text-blue-600 font-semibold"
+        >
+          <i class="pi pi-file-import mr-2"></i>
 
-        Import CSV
-      </button>
+          Import CSV
+        </button>
+      </a-upload>
+
       <button
         @click="onAdd"
         class="mr-5 bg-green-600 hover:bg-green-700 py-2 px-8 rounded-sm text-white font-semibold"
@@ -130,7 +187,7 @@ const columns = [
     </div>
   </div>
 
-  <a-table :columns="columns" :data-source="data">
+  <a-table :columns="columns" :data-source="artists">
     <template #headerCell="{ column }">
       <template v-if="column.key === 'name'">
         <span class="uppercase"> Name </span>

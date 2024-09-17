@@ -1,29 +1,81 @@
 <script setup>
-import { reactive, ref, toRaw } from "vue";
+import { reactive, ref, toRaw, watch } from "vue";
 import BackBtn from "@/components/BackBtn.vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { message } from "ant-design-vue";
 import moment from "moment";
+import { getRoles } from "@/api/Roles";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
+import { getUserById, updateUser } from "@/api/Users";
 
 const formRef = ref();
 
 const router = useRouter();
+const route = useRoute();
+
+const userId = ref(route.params.id);
+
+const { data: user } = useQuery({
+  queryKey: ["user", userId.value],
+  queryFn: () => getUserById(userId.value),
+});
+
+const queryClient = useQueryClient();
+
+const { mutateAsync } = useMutation({
+  mutationFn: (data) => updateUser(userId.value, data),
+  onSuccess: () => {
+    queryClient.invalidateQueries(["users"]);
+    router.push("/users");
+    message.success("User updated successfully!");
+  },
+  onError: (err) => {
+    console.log(err.message);
+    message.error("Failed to update user!");
+  },
+});
 
 const formState = reactive({
-  first_name: "First name",
-  last_name: "Last name",
-  email: "first_last@gmail.com",
-  phone: "98989080",
-  dob: moment("1999-01-01"),
-  gender: "m",
-  address: "Chakupat, Lalitpur",
+  first_name: "",
+  last_name: "",
+  email: "",
+  phone: "",
+  dob: null,
+  gender: null,
+  password: "",
+  confirmPassword: "",
+  address: "",
+  role_id: null,
+});
+
+// Watch for changes in the `user` data and update the form state accordingly
+watch(
+  () => user.value,
+  (newUser) => {
+    if (newUser) {
+      formState.first_name = newUser.first_name || "";
+      formState.last_name = newUser.last_name || "";
+      formState.email = newUser.email || "";
+      formState.phone = newUser.phone || "";
+      formState.dob = moment(newUser.dob) || null;
+      formState.gender = newUser.gender || "m";
+      formState.address = newUser.address || "";
+      formState.role_id = newUser.role_id || null;
+    }
+  },
+  { immediate: true } // Ensures that it runs immediately after `user` is fetched
+);
+
+const { data: rolesData } = useQuery({
+  queryKey: ["roles"],
+  queryFn: () => getRoles(),
 });
 
 const validatePass = async (_rule, value) => {
   if (value === "") {
     return Promise.reject("Please input the password");
   } else {
-    if (formState.comfirmPassword !== "") {
+    if (formState.confirmPassword !== "") {
       formRef.value.validateFields("checkPass");
     }
     return Promise.resolve();
@@ -117,9 +169,16 @@ const rules = {
 const onSubmit = () => {
   formRef.value
     .validate()
-    .then(() => {
-      console.log("values", formState, toRaw(formState));
-      message.success("User updated successfully!");
+    .then(async () => {
+      const formData = toRaw(formState);
+      delete formData.confirmPassword;
+      const finalFormData = {
+        ...formData,
+        dob: moment(formData.dob).format("YYYY-MM-DD"),
+        password_digest: formData.password,
+      };
+      delete finalFormData.password;
+      await mutateAsync(finalFormData);
       window.history.back();
     })
     .catch((error) => {
@@ -182,6 +241,32 @@ const resetForm = () => {
           />
         </a-form-item>
       </div>
+      <div class="flex flex-row gap-4">
+        <a-form-item
+          class="flex-1"
+          has-feedback
+          label="Password"
+          name="password"
+        >
+          <a-input
+            v-model:value="formState.password"
+            type="password"
+            autocomplete="off"
+          />
+        </a-form-item>
+        <a-form-item
+          class="flex-1"
+          has-feedback
+          label="Confirm Password"
+          name="confirmPassword"
+        >
+          <a-input
+            v-model:value="formState.confirmPassword"
+            type="password"
+            autocomplete="off"
+          />
+        </a-form-item>
+      </div>
       <a-form-item ref="address" label="Address" required name="address">
         <a-input v-model:value="formState.address" />
       </a-form-item>
@@ -206,6 +291,24 @@ const resetForm = () => {
           <a-input v-model:value="formState.phone" />
         </a-form-item>
       </div>
+      <a-form-item class="flex-1" label="Role" name="role_id" required>
+        <a-select
+          v-model:value="formState.role_id"
+          placeholder="please select a role "
+        >
+          <a-select-option
+            v-for="role in rolesData"
+            :key="role.id"
+            :value="role.id"
+            class="capitalize"
+          >
+            {{ role.title }}
+          </a-select-option>
+          <!-- <a-select-option value="m">Male</a-select-option>
+          <a-select-option value="f">Female</a-select-option>
+          <a-select-option value="o">Others</a-select-option> -->
+        </a-select>
+      </a-form-item>
 
       <a-form-item>
         <a-button type="primary" @click="onSubmit" class="w-full h-[30px]"

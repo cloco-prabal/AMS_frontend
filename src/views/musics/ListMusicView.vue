@@ -1,22 +1,26 @@
 <script setup>
-import { deleteMusic, getMusics } from "@/api/Musics";
+import { deleteMusic, getMusics, getMusicsByArtistId } from "@/api/Musics";
 import BackBtn from "@/components/BackBtn.vue";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { message } from "ant-design-vue";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const router = useRouter();
 const route = useRoute();
 
 const artist = ref(route.query?.name);
+const artistId = ref(route.params?.artistId);
 
 const queryClient = useQueryClient();
 
-const { data } = useQuery({
-  queryFn: getMusics,
-  queryKey: ["musics"],
+const { data: response } = useQuery({
+  queryFn: () => getMusicsByArtistId(1, 10, artistId.value),
+  queryKey: ["musicsByArtistId", artistId.value],
 });
+
+const musics = computed(() => response?.value?.data || []);
+const pagination = computed(() => response?.value?.pagination || {});
 
 const { mutateAsync } = useMutation({
   mutationFn: (id) => deleteMusic(id),
@@ -30,10 +34,10 @@ const { mutateAsync } = useMutation({
 });
 
 const onAdd = () => {
-  router.push("/musics/add");
+  router.push(`/musics/add/${artistId.value}`);
 };
 const onEdit = (record) => {
-  router.push(`/musics/edit/${record.key}`);
+  router.push(`/musics/edit/${record.id}`);
 };
 
 const onDelete = async (record) => {
@@ -91,7 +95,7 @@ const columns = [
     </div>
   </div>
 
-  <a-table :columns="columns" :data-source="data">
+  <a-table :columns="columns" :data-source="musics">
     <template #headerCell="{ column }"> </template>
 
     <template #bodyCell="{ column, record }">
