@@ -160,12 +160,12 @@ const resetForm = () => {
     <a-form
       ref="formRef"
       :model="formState"
-      class="lg:w-[38%] md:w-[70%]"
+      class="lg:w-[38%] md:w-[70%] xsm:w-[90%]"
       :rules="rules"
       layout="vertical"
     >
       <div class="flex flex-row justify-between my-[60px]">
-        <h1 class="text-3xl text-left text-black">ARM Registration</h1>
+        <h1 class="text-2xl text-left text-black">ARM Registration</h1>
         <BackBtn />
       </div>
 

@@ -90,13 +90,15 @@ const resetForm = () => {
     <a-form
       ref="formRef"
       :model="formState"
-      class="w-[60%] mx-auto"
+      class="w-[100%] mx-auto"
       :rules="rules"
       layout="vertical"
     >
+      <div class="flex w-full justify-end mb-5">
+        <BackBtn />
+      </div>
       <div class="flex flex-row justify-between my-5">
         <h1 class="text-xl text-left font-semibold">ADD A NEW SONG</h1>
-        <BackBtn />
       </div>
 
       <a-form-item ref="title" label="Title" required name="title">

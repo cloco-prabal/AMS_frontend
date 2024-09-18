@@ -26,6 +26,8 @@ const { mutateAsync } = useMutation({
 const onFinish = async (values) => {
   const response = await mutateAsync(values);
   localStorage.setItem("token", response.token);
+  localStorage.setItem("user", JSON.stringify(response.user));
+  localStorage.setItem("role", JSON.stringify(response.role));
 };
 const onFinishFailed = (errorInfo) => {
   console.log("Failed:", errorInfo);
@@ -37,7 +39,7 @@ const onFinishFailed = (errorInfo) => {
     <a-form
       :model="formState"
       name="basic"
-      class="lg:w-[32%] md:w-[70%]"
+      class="lg:w-[32%] md:w-[70%] xsm:w-[90%]"
       autocomplete="off"
       @finish="onFinish"
       @finishFailed="onFinishFailed"

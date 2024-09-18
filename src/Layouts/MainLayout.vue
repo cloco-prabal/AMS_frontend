@@ -1,20 +1,29 @@
 <script setup>
 import { RouterView, useRouter } from "vue-router";
 import { ref } from "vue";
-const onCollapse = (collapsed, type) => {
-  console.log(collapsed, type);
-};
+
+const hitBreakpoint = ref(false);
+
+const onCollapse = (collapsed, type) => {};
 const onBreakpoint = (broken) => {
-  console.log(broken);
+  hitBreakpoint.value = broken;
 };
 const selectedKeys = ref(["1"]);
 
 const router = useRouter();
 
 const onClick = () => {
-  localStorage.removeItem("token");
+  localStorage.clear();
   router.push("/login");
 };
+
+const user = ref(
+  JSON.parse(localStorage.getItem("user"))?.first_name +
+    " " +
+    JSON.parse(localStorage.getItem("user"))?.last_name
+);
+
+const role = ref(JSON.parse(localStorage.getItem("role"))?.title);
 </script>
 
 <template>
@@ -22,6 +31,7 @@ const onClick = () => {
     <a-layout-sider
       breakpoint="lg"
       collapsed-width="0"
+      :class="[hitBreakpoint ? '!absolute !top-0 !bottom-0 !z-[999]' : '']"
       @collapse="onCollapse"
       @breakpoint="onBreakpoint"
     >
@@ -32,7 +42,7 @@ const onClick = () => {
       </div>
       <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline">
         <a-menu-item key="1">
-          <RouterLink to="/" class="nav-text"> Artist</RouterLink>
+          <RouterLink to="/" class="nav-text"> Artists</RouterLink>
         </a-menu-item>
         <a-menu-item key="2">
           <RouterLink to="/users" class="nav-text"> Users</RouterLink>
@@ -49,15 +59,18 @@ const onClick = () => {
     </a-layout-sider>
     <a-layout>
       <a-layout-header
-        class="flex justify-end"
+        class="flex justify-end gap-10"
         :style="{ background: '#fff', padding: 0 }"
       >
-        <div class="flex flex-row gap-5 mr-5 items-center">
-          <p class="self-start">Howdy! User</p>
+        <div class="flex flex-row gap-5 items-center">
+          <p class="self-start capitalize">Howdy! {{ user }}</p>
           <a-avatar :size="30">
             <template #icon><i class="pi pi-user"></i></template>
           </a-avatar>
         </div>
+        <p class="mr-10">
+          Role: <span class="uppercase"> {{ role }}</span>
+        </p>
       </a-layout-header>
       <a-layout-content :style="{ margin: '24px 16px 0' }">
         <div :style="{ padding: '24px', background: '#fff', minHeight: '95%' }">

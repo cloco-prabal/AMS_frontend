@@ -96,8 +96,6 @@ const onSubmit = () => {
       const data = toRaw(formState);
 
       await mutateAsync(data);
-      // message.success("Song created successfully!");
-      // window.history.back();
     })
     .catch((error) => {
       console.log("error", error);
@@ -110,13 +108,15 @@ const onSubmit = () => {
     <a-form
       ref="formRef"
       :model="formState"
-      class="w-[60%] mx-auto"
+      class="w-[100%] mx-auto"
       :rules="rules"
       layout="vertical"
     >
-      <div class="flex flex-row justify-between my-5">
-        <h1 class="text-xl text-left font-semibold">ADD A NEW SONG</h1>
+      <div class="flex w-full justify-end mb-5">
         <BackBtn />
+      </div>
+      <div class="flex flex-row justify-between my-5">
+        <h1 class="text-xl text-left font-semibold">UPDATE SONG</h1>
       </div>
 
       <a-form-item ref="title" label="Title" required name="title">
@@ -146,7 +146,7 @@ const onSubmit = () => {
 
       <a-form-item>
         <a-button type="primary" @click="onSubmit" class="w-full h-[35px]"
-          >ADD</a-button
+          >UPDATE</a-button
         >
       </a-form-item>
     </a-form>

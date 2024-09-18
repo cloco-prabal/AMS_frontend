@@ -1,5 +1,5 @@
 <script setup>
-import { deleteMusic, getMusics, getMusicsByArtistId } from "@/api/Musics";
+import { deleteMusic, getMusicsByArtistId } from "@/api/Musics";
 import BackBtn from "@/components/BackBtn.vue";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { message } from "ant-design-vue";
@@ -14,9 +14,18 @@ const artistId = ref(route.params?.artistId);
 
 const queryClient = useQueryClient();
 
+const pageSize = ref(5);
+const currentPage = ref(1);
+
+const handlePageChange = (page, size) => {
+  pageSize.value = size;
+  currentPage.value = page;
+};
+
 const { data: response } = useQuery({
-  queryFn: () => getMusicsByArtistId(1, 10, artistId.value),
-  queryKey: ["musicsByArtistId", artistId.value],
+  queryFn: () =>
+    getMusicsByArtistId(currentPage.value, pageSize.value, artistId.value),
+  queryKey: ["musicsByArtistId", artistId, pageSize, currentPage],
 });
 
 const musics = computed(() => response?.value?.data || []);
@@ -56,6 +65,11 @@ const onDelete = async (record) => {
 
 const columns = [
   {
+    title: "S.N.",
+    dataIndex: "sn",
+    key: "sn",
+  },
+  {
     title: "Title",
     dataIndex: "title",
     key: "title",
@@ -71,34 +85,38 @@ const columns = [
     key: "genre",
   },
   {
-    title: "Action",
+    title: "Actions",
     key: "action",
   },
 ];
 </script>
 
 <template>
-  <div class="flex flex-row justify-between mb-5">
-    <h1 class="text-xl text-left font-semibold underline">
-      <span class="text-green-500">{{ artist }}'s</span> Songs
+  <div class="flex w-full justify-end mb-5">
+    <BackBtn />
+  </div>
+  <div class="flex sm:flex-row xsm:flex-col gap-10 justify-between mb-5">
+    <h1 class="text-lg text-left sm:self-end font-semibold">
+      <span class="text-green-500">{{ artist }}'s</span> songs list
     </h1>
-    <div class="flex justify-end mb-5 mr-6">
-      <button
-        @click="onAdd"
-        class="mr-5 bg-green-600 hover:bg-green-700 py-2 px-8 rounded-sm text-white font-semibold"
-      >
-        Add A Song
-      </button>
-      <div class="self-end">
-        <BackBtn />
-      </div>
-    </div>
+
+    <button
+      @click="onAdd"
+      class="bg-green-600 hover:bg-green-700 py-2 px-8 rounded-sm text-white font-semibold"
+    >
+      Add A Song
+    </button>
   </div>
 
-  <a-table :columns="columns" :data-source="musics">
+  <a-table
+    :columns="columns"
+    :data-source="musics"
+    :scroll="{ x: 1000 }"
+    :pagination="false"
+  >
     <template #headerCell="{ column }"> </template>
 
-    <template #bodyCell="{ column, record }">
+    <template #bodyCell="{ column, record, index }">
       <template class="capitalize" v-if="column.key === 'action'">
         <div class="flex flex-row gap-3">
           <button
@@ -117,6 +135,11 @@ const columns = [
           <a-divider type="vertical" />
         </div>
       </template>
+      <template v-else-if="column.key === 'sn'">
+        <p class="capitalize">
+          {{ index + 1 }}
+        </p>
+      </template>
       <template v-else>
         <p class="capitalize">
           {{ record[column.key] }}
@@ -124,4 +147,16 @@ const columns = [
       </template>
     </template>
   </a-table>
+  <div class="my-10 flex justify-end">
+    <a-pagination
+      v-model:current="pagination.current_page"
+      defaultPageSize="10"
+      :page-size="pageSize"
+      @change="handlePageChange"
+      :pageSizeOptions="['1', '5', '10', '20', '50']"
+      :showSizeChanger="true"
+      :total="pagination.total_count"
+      :show-total="(total) => `Total ${total} items`"
+    />
+  </div>
 </template>

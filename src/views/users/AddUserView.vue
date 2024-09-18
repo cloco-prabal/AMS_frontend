@@ -139,13 +139,15 @@ const resetForm = () => {
     <a-form
       ref="formRef"
       :model="formState"
-      class="w-[60%] mx-auto"
+      class="w-[60%] xsm:w-[100%] mx-auto"
       :rules="rules"
       layout="vertical"
     >
+      <div class="flex w-full justify-end mb-5">
+        <BackBtn />
+      </div>
       <div class="flex flex-row justify-between my-5">
         <h1 class="text-xl text-left font-semibold">ADD A NEW USER</h1>
-        <BackBtn />
       </div>
       <div class="flex flex-row gap-4">
         <a-form-item
@@ -196,26 +198,26 @@ const resetForm = () => {
       <a-form-item ref="address" label="Address" required name="address">
         <a-input v-model:value="formState.address" />
       </a-form-item>
-      <div class="flex flex-row gap-4">
-        <a-form-item class="flex-1" label="Gender" name="gender">
-          <a-select
-            v-model:value="formState.gender"
-            placeholder="please select your gender"
-          >
-            <a-select-option value="m">Male</a-select-option>
-            <a-select-option value="f">Female</a-select-option>
-            <a-select-option value="o">Others</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item class="flex-1" label="DOB" required name="dob">
-          <a-date-picker
-            v-model:value="formState.dob"
-            type="date"
-            placeholder="Pick your DOB"
-            style="width: 100%"
-          />
-        </a-form-item>
-      </div>
+      <!-- <div class="flex flex-row gap-4">
+      </div> -->
+      <a-form-item class="flex-1" label="Gender" name="gender">
+        <a-select
+          v-model:value="formState.gender"
+          placeholder="please select your gender"
+        >
+          <a-select-option value="m">Male</a-select-option>
+          <a-select-option value="f">Female</a-select-option>
+          <a-select-option value="o">Others</a-select-option>
+        </a-select>
+      </a-form-item>
+      <a-form-item class="flex-1" label="DOB" required name="dob">
+        <a-date-picker
+          v-model:value="formState.dob"
+          type="date"
+          placeholder="Pick your DOB"
+          style="width: 100%"
+        />
+      </a-form-item>
 
       <div class="flex flex-row gap-4">
         <a-form-item
