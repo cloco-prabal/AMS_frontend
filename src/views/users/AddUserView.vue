@@ -7,12 +7,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import moment from "moment";
 import { addUser } from "@/api/Users";
 import { getRoles } from "@/api/Roles";
+import { getArtists } from "@/api/Artists";
 
 // Fetch roles data
 // Fetch roles data
 const { data: rolesData } = useQuery({
   queryKey: ["roles"],
   queryFn: () => getRoles(),
+});
+const { data: artistsData } = useQuery({
+  queryKey: ["artists"],
+  queryFn: () => getArtists(),
 });
 
 const formRef = ref();
@@ -30,6 +35,8 @@ const { mutateAsync } = useMutation({
     message.error("Failed to add user!");
   },
 });
+
+const role_selected = ref("");
 
 const formState = reactive({
   first_name: "",
@@ -92,6 +99,13 @@ const rules = {
   role_id: [
     { required: true, message: "Please input role", trigger: "change" },
   ],
+  artist_id: [
+    {
+      required: role_selected === "artist" ? true : false,
+      message: "Please input artist",
+      trigger: "change",
+    },
+  ],
   dob: [
     {
       required: true,
@@ -129,8 +143,10 @@ const onSubmit = () => {
     });
 };
 
-const resetForm = () => {
-  formRef.value.resetFields();
+const handleChange = (value) => {
+  const roles = rolesData.value;
+  const selectedRole = roles.find((role) => role.id === value);
+  role_selected.value = selectedRole.title.toLowerCase();
 };
 </script>
 
@@ -243,6 +259,7 @@ const resetForm = () => {
         <a-select
           v-model:value="formState.role_id"
           placeholder="please select a role "
+          @change="handleChange"
         >
           <a-select-option
             v-for="role in rolesData"
@@ -251,6 +268,30 @@ const resetForm = () => {
             class="capitalize"
           >
             {{ role.title }}
+          </a-select-option>
+          <!-- <a-select-option value="m">Male</a-select-option>
+          <a-select-option value="f">Female</a-select-option>
+          <a-select-option value="o">Others</a-select-option> -->
+        </a-select>
+      </a-form-item>
+      <a-form-item
+        v-if="role_selected === 'artist'"
+        class="flex-1"
+        label="Artist"
+        name="artist_id"
+        :required="role_selected === 'artist' ? true : false"
+      >
+        <a-select
+          v-model:value="formState.artist_id"
+          placeholder="please select an artist "
+        >
+          <a-select-option
+            v-for="artist in artistsData.data"
+            :key="artist.id"
+            :value="artist.id"
+            class="capitalize"
+          >
+            {{ artist.name }}
           </a-select-option>
           <!-- <a-select-option value="m">Male</a-select-option>
           <a-select-option value="f">Female</a-select-option>

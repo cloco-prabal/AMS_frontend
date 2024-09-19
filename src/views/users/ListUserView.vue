@@ -1,5 +1,6 @@
 <script setup>
 import { deleteUser, getUsers } from "@/api/Users";
+import { permissionsByRoleName } from "@/utils/permissionsByRoleName";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { message } from "ant-design-vue";
 import { computed, ref } from "vue";
@@ -7,6 +8,8 @@ import { useRouter } from "vue-router";
 
 const router = useRouter();
 const queryClient = useQueryClient();
+
+const permissions = ref(permissionsByRoleName());
 
 const pageSize = ref(5);
 const currentPage = ref(1);
@@ -91,6 +94,11 @@ const columns = [
     dataIndex: "gender",
   },
   {
+    title: "Role",
+    key: "role",
+    dataIndex: "role",
+  },
+  {
     title: "Actions",
     key: "action",
   },
@@ -101,6 +109,7 @@ const columns = [
   <div class="flex sm:flex-row xsm:flex-col gap-10 justify-between mb-5">
     <h1 class="text-xl text-left font-semibold">Users List</h1>
     <button
+      v-if="permissions?.user?.create"
       @click="onAdd"
       class="bg-green-600 hover:bg-green-700 py-2 px-8 rounded-sm text-white font-semibold"
     >
@@ -127,9 +136,13 @@ const columns = [
       <template v-else-if="column.key === 'dob'">
         <p>{{ record.dob.split("T")[0] }}</p>
       </template>
+      <template v-else-if="column.key === 'role'">
+        <p class="uppercase">{{ record.role.title }}</p>
+      </template>
       <template v-else-if="column.key === 'action'">
         <div class="flex flex-row gap-3 min-w-[200px]">
           <button
+            v-if="permissions?.user?.update"
             @click="onEdit(record)"
             class="bg-blue-500 hover:bg-blue-600 text-white flex-1 text-center py-1 rounded-md font-md"
           >
@@ -137,6 +150,7 @@ const columns = [
           </button>
           <a-divider type="vertical" />
           <button
+            v-if="permissions?.user?.delete"
             @click="onDelete(record)"
             class="bg-red-500 hover:bg-red-600 text-white flex-1 text-center py-1 rounded-md font-md"
           >

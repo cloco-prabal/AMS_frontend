@@ -13,9 +13,17 @@ const formState = reactive({
 
 const { mutateAsync } = useMutation({
   mutationFn: (data) => login(data),
-  onSuccess: () => {
+  onSuccess: (values) => {
     message.success("Login successfull!");
-    router.push("/");
+    if (values.user.artist_id) {
+      router.push(
+        `/musics/${values.user.artist_id}?name=${
+          values.user.first_name + " " + values.user.last_name
+        }`
+      );
+    } else {
+      router.push("/");
+    }
   },
   onError: (err) => {
     console.log(err);

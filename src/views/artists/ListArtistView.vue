@@ -2,16 +2,19 @@ a-table
 <script setup>
 import { addArtist, deleteArtist, getArtists } from "@/api/Artists";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
-import { message, Upload } from "ant-design-vue";
+import { message } from "ant-design-vue";
 import { useRouter } from "vue-router";
 import { mkConfig, generateCsv, download } from "export-to-csv";
 import { computed, ref, toRaw } from "vue";
 import Papa from "papaparse";
 import moment from "moment";
+import { permissionsByRoleName } from "@/utils/permissionsByRoleName";
 
 const router = useRouter();
 
 const queryClient = useQueryClient();
+
+const permissions = ref(permissionsByRoleName());
 
 const pageSize = ref(5);
 
@@ -26,7 +29,6 @@ const { data: response } = useQuery({
   queryKey: ["artists", currentPage, pageSize],
   queryFn: () => getArtists(currentPage.value, pageSize.value),
 });
-
 const artists = computed(() => response?.value?.data || []);
 const pagination = computed(() => response?.value?.pagination || {});
 
@@ -51,7 +53,7 @@ const { mutateAsync: importMutate } = useMutation({
 
 const csvExport = (filename = "Artists") => {
   const csvConfig = mkConfig({ useKeysAsHeaders: true, filename: filename });
-  const csv = generateCsv(csvConfig)(toRaw(data.value));
+  const csv = generateCsv(csvConfig)(toRaw(response?.value?.data));
   download(csvConfig)(csv);
 };
 
@@ -165,6 +167,7 @@ const columns = [
 
     <div class="flex xsm:flex-col md:flex-row gap-10">
       <button
+        v-if="permissions?.csv?.download"
         @click="csvExport()"
         class="border-green-400 hover:border-green-400 border-2 py-2 px-8 rounded-sm hover:text-green-600 font-semibold"
       >
@@ -173,6 +176,7 @@ const columns = [
       </button>
 
       <a-upload
+        v-if="permissions?.csv?.upload"
         accept=".csv"
         @change="csvImport"
         class="border-blue-400 hover:border-blue-400 border-2 py-2 px-8 rounded-sm hover:text-blue-600 text-center font-semibold"
@@ -187,6 +191,7 @@ const columns = [
       </a-upload>
 
       <button
+        v-if="permissions?.artist?.create"
         @click="onAdd"
         class="bg-green-600 hover:bg-green-700 py-2 px-8 rounded-sm text-white font-semibold"
       >
@@ -232,6 +237,7 @@ const columns = [
       <template v-else-if="column.key === 'action'">
         <div class="flex flex-row gap-3 min-w-[350px]">
           <button
+            v-if="permissions?.artist?.update"
             @click="onEdit(record)"
             class="bg-blue-500 hover:bg-blue-600 text-white flex-1 text-center py-1 rounded-md font-md"
           >
@@ -239,6 +245,7 @@ const columns = [
           </button>
           <a-divider type="vertical" />
           <button
+            v-if="permissions?.artist?.delete"
             @click="onDelete(record)"
             class="bg-red-500 hover:bg-red-600 text-white flex-1 text-center py-1 rounded-md font-md"
           >
@@ -247,6 +254,7 @@ const columns = [
           <a-divider type="vertical" />
 
           <button
+            v-if="permissions?.song?.list"
             @click="onSongView(record)"
             class="text-black flex-1 text-center py-1 rounded-md font-md border-2 border-black"
           >

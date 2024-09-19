@@ -1,6 +1,8 @@
 <script setup>
 import { deleteMusic, getMusicsByArtistId } from "@/api/Musics";
 import BackBtn from "@/components/BackBtn.vue";
+import { getRoleName } from "@/utils/getRoleName";
+import { permissionsByRoleName } from "@/utils/permissionsByRoleName";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { message } from "ant-design-vue";
 import { computed, ref } from "vue";
@@ -13,6 +15,9 @@ const artist = ref(route.query?.name);
 const artistId = ref(route.params?.artistId);
 
 const queryClient = useQueryClient();
+
+const permissions = ref(permissionsByRoleName());
+const roleName = ref(getRoleName());
 
 const pageSize = ref(5);
 const currentPage = ref(1);
@@ -34,7 +39,7 @@ const pagination = computed(() => response?.value?.pagination || {});
 const { mutateAsync } = useMutation({
   mutationFn: (id) => deleteMusic(id),
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["musics"] });
+    queryClient.invalidateQueries({ queryKey: ["musicsByArtistId"] });
     message.success("Music deleted");
   },
   onError: (err) => {
@@ -92,7 +97,7 @@ const columns = [
 </script>
 
 <template>
-  <div class="flex w-full justify-end mb-5">
+  <div v-if="roleName !== 'artist'" class="flex w-full justify-end mb-5">
     <BackBtn />
   </div>
   <div class="flex sm:flex-row xsm:flex-col gap-10 justify-between mb-5">
@@ -101,6 +106,7 @@ const columns = [
     </h1>
 
     <button
+      v-if="permissions?.song?.create"
       @click="onAdd"
       class="bg-green-600 hover:bg-green-700 py-2 px-8 rounded-sm text-white font-semibold"
     >
@@ -120,6 +126,7 @@ const columns = [
       <template class="capitalize" v-if="column.key === 'action'">
         <div class="flex flex-row gap-3">
           <button
+            v-if="permissions?.song?.update"
             @click="onEdit(record)"
             class="bg-blue-500 hover:bg-blue-600 text-white flex-1 text-center py-1 rounded-md font-md"
           >
@@ -127,6 +134,7 @@ const columns = [
           </button>
           <a-divider type="vertical" />
           <button
+            v-if="permissions?.song?.delete"
             @click="onDelete(record)"
             class="bg-red-500 hover:bg-red-600 text-white flex-1 text-center py-1 rounded-md font-md"
           >

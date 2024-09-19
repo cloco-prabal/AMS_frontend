@@ -1,6 +1,10 @@
 <script setup>
 import { RouterView, useRouter } from "vue-router";
 import { ref } from "vue";
+import { useQueryClient } from "@tanstack/vue-query";
+import { permissionsByRoleName } from "@/utils/permissionsByRoleName";
+
+const permissions = ref(permissionsByRoleName());
 
 const hitBreakpoint = ref(false);
 
@@ -12,8 +16,12 @@ const selectedKeys = ref(["1"]);
 
 const router = useRouter();
 
+const queryClient = useQueryClient();
+
 const onClick = () => {
   localStorage.clear();
+  queryClient.invalidateQueries();
+  queryClient.resetQueries();
   router.push("/login");
 };
 
@@ -31,7 +39,9 @@ const role = ref(JSON.parse(localStorage.getItem("role"))?.title);
     <a-layout-sider
       breakpoint="lg"
       collapsed-width="0"
-      :class="[hitBreakpoint ? '!absolute !top-0 !bottom-0 !z-[999]' : '']"
+      :class="[
+        hitBreakpoint ? '!absolute !top-0 !bottom-0 !z-[999] min-h-screen' : '',
+      ]"
       @collapse="onCollapse"
       @breakpoint="onBreakpoint"
     >
@@ -41,10 +51,10 @@ const role = ref(JSON.parse(localStorage.getItem("role"))?.title);
         <p class="text-xl font-bold">Artist Management</p>
       </div>
       <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline">
-        <a-menu-item key="1">
+        <a-menu-item v-if="permissions?.artist?.list" key="1">
           <RouterLink to="/" class="nav-text"> Artists</RouterLink>
         </a-menu-item>
-        <a-menu-item key="2">
+        <a-menu-item v-if="permissions?.user?.list" key="2">
           <RouterLink to="/users" class="nav-text"> Users</RouterLink>
         </a-menu-item>
       </a-menu>

@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHistory, useRouter } from "vue-router";
 import MainLayout from "@/layouts/MainLayout.vue"; // Common layout
 import LoginView from "@/views/auth/LoginView.vue";
 import RegistrationView from "@/views/auth/RegistrationView.vue";
@@ -12,10 +12,24 @@ import ListUserView from "@/views/users/ListUserView.vue";
 import AddArtistView from "@/views/artists/AddArtistView.vue";
 import UpdateArtistView from "@/views/artists/UpdateArtistView.vue";
 import NotFound from "@/views/NotFound.vue";
+import { routeRoles } from "@/utils/permissions";
+import { getRoleName } from "@/utils/getRoleName";
+import { message } from "ant-design-vue";
 
 function isAuthenticated() {
   return !!localStorage.getItem("token");
 }
+
+// export const routeRoles = {
+//   "index": ["system_admin", "super_admin", "artist_manager"],
+//   "add-user": ["system_admin", "super_admin"],
+//   "users-list": ["system_admin", "super_admin"],
+//   "add-artist": ["system_admin", "artist_manager"],
+//   "edit-artist": ["system_admin", "artist_manager"],
+//   "musics-list": ["system_admin", "super_admin", "artist_manager", "artist"],
+//   "add-music": ["system_admin", "artist"],
+//   "edit-music": ["system_admin", "artist"],
+// };
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -31,10 +45,10 @@ const router = createRouter({
       name: "register",
       component: RegistrationView,
     },
-
     // Routes with MainLayout
     {
       path: "/",
+      name: "home-index",
       component: MainLayout,
       children: [
         {
@@ -105,7 +119,11 @@ router.beforeEach((to, from, next) => {
   if (loggedIn && publicPages.includes(to.path)) {
     return next("/");
   }
-
+  const allowedRoles = routeRoles[to.name] || [];
+  if (!allowedRoles.includes(getRoleName()) && !publicPages.includes(to.path)) {
+    message.info("Sorry, you do not have  permission to access this page.");
+    return next(from);
+  }
   next();
 });
 
