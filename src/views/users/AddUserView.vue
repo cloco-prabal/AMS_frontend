@@ -148,6 +148,11 @@ const handleChange = (value) => {
   const selectedRole = roles.find((role) => role.id === value);
   role_selected.value = selectedRole.title.toLowerCase();
 };
+
+const disabledDate = (current) => {
+  // Can not select days before today and today
+  return current && current > new Date();
+};
 </script>
 
 <template>
@@ -230,6 +235,7 @@ const handleChange = (value) => {
         <a-date-picker
           v-model:value="formState.dob"
           type="date"
+          :disabled-date="disabledDate"
           placeholder="Pick your DOB"
           style="width: 100%"
         />

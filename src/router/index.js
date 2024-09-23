@@ -104,7 +104,7 @@ const router = createRouter({
     },
   ],
 });
-
+console.log(history.length, "lengthththth", history.state);
 router.beforeEach((to, from, next) => {
   const publicPages = ["/login", "/register"];
   const authRequired = !publicPages.includes(to.path);
@@ -116,13 +116,14 @@ router.beforeEach((to, from, next) => {
   }
 
   // Redirect to home (or protected route) if already logged in and trying to access an auth page
-  if (loggedIn && publicPages.includes(to.path)) {
-    return next("/");
-  }
   const allowedRoles = routeRoles[to.name] || [];
-  if (!allowedRoles.includes(getRoleName()) && !publicPages.includes(to.path)) {
-    message.info("Sorry, you do not have  permission to access this page.");
-    return next(from);
+  if (
+    (!allowedRoles.includes(getRoleName()) && !publicPages.includes(to.path)) ||
+    (loggedIn && publicPages.includes(to.path))
+  ) {
+    history.back();
+
+    return;
   }
   next();
 });

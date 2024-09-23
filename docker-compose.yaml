@@ -1,0 +1,9 @@
+version: "3.8"
+services:
+  frontend:
+    build: .
+    container_name: my_frontend_c
+    ports:
+      - "8000:8000"
+    stdin_open: true
+    tty: true

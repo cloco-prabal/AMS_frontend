@@ -151,6 +151,10 @@ const onSubmit = () => {
 const resetForm = () => {
   formRef.value.resetFields();
 };
+const disabledDate = (current) => {
+  // Can not select days before today and today
+  return current && current > new Date();
+};
 </script>
 
 <template>
@@ -254,6 +258,7 @@ const resetForm = () => {
           <a-date-picker
             v-model:value="formState.dob"
             type="date"
+            :disabled-date="disabledDate"
             placeholder="Pick your DOB"
             style="width: 100%"
           />

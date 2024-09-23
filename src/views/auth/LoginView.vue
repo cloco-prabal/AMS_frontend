@@ -35,7 +35,7 @@ const onFinish = async (values) => {
   const response = await mutateAsync(values);
   localStorage.setItem("token", response.token);
   localStorage.setItem("user", JSON.stringify(response.user));
-  localStorage.setItem("role", JSON.stringify(response.role));
+  localStorage.setItem("role", JSON.stringify(response.user.role));
 };
 const onFinishFailed = (errorInfo) => {
   console.log("Failed:", errorInfo);

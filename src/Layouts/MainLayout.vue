@@ -26,12 +26,17 @@ const onClick = () => {
 };
 
 const user = ref(
-  JSON.parse(localStorage.getItem("user"))?.first_name +
+  JSON.parse(localStorage?.getItem("user") ? localStorage.getItem("user") : "")
+    ?.first_name +
     " " +
-    JSON.parse(localStorage.getItem("user"))?.last_name
+    JSON.parse(localStorage.getItem("user") ? localStorage.getItem("user") : "")
+      ?.last_name
 );
 
-const role = ref(JSON.parse(localStorage.getItem("role"))?.title);
+const role = ref(
+  JSON.parse(localStorage.getItem("role") ? localStorage.getItem("role") : "")
+    ?.title
+);
 </script>
 
 <template>
@@ -69,7 +74,7 @@ const role = ref(JSON.parse(localStorage.getItem("role"))?.title);
     </a-layout-sider>
     <a-layout>
       <a-layout-header
-        class="flex justify-end gap-10"
+        class="flex justify-end md:flex-row gap-10 xsm:flex-col"
         :style="{ background: '#fff', padding: 0 }"
       >
         <div class="flex flex-row gap-5 items-center">
